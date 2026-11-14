@@ -1,0 +1,20 @@
+{
+  "name": "warung-bu-pita",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test src/tanya.test.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "@fontsource/inter": "^5.1.0",
+    "@supabase/supabase-js": "^2.45.4",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  },
+  "private": true
+}

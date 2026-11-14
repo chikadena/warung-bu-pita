@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Warung Bu Pita</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23f5a524'/><text x='16' y='22' font-size='16' text-anchor='middle' font-family='sans-serif' font-weight='700' fill='%23111'>P</text></svg>">
+</head>
+<body>
+<div class="aplikasi">
+  <header class="topbar">
+    <a class="logo" href="#beranda" aria-label="Warung Bu Pita, ke Beranda">
+      <span class="logo-ikon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v9h16v-9M3 6l2-3h14l2 3v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM10 19v-5h4v5"/></svg></span>
+      <span>Warung <b>Bu Pita</b></span>
+    </a>
+    <button class="bulat hamburger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav id="menu" aria-label="Navigasi utama">
+      <a href="#beranda">Beranda</a>
+      <a href="#produksi">Produksi</a>
+      <a href="#persediaan">Persediaan</a>
+      <a href="#penjualan">Penjualan</a>
+      <a href="#kesesuaian">Cek Kesesuaian</a>
+      <a href="#laporan">Laporan</a>
+    </nav>
+    <div class="aksi-atas">
+      <button class="bulat" type="button" id="tombol-cari" aria-label="Tanya sistem">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>
+      </button>
+      <a class="bulat lonceng" href="#kesesuaian" id="lonceng" aria-label="Notifikasi selisih">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg>
+        <span class="titik-notif" hidden></span>
+      </a>
+      <span class="status-buka" id="status-buka"><i></i><span></span></span>
+    </div>
+  </header>
+
+  <div class="kepala">
+    <div class="judul">
+      <h1 id="judul-halaman">Ringkasan</h1>
+      <button class="bulat kecil" type="button" id="salin-tautan" aria-label="Salin tautan halaman">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>
+      </button>
+    </div>
+    <div class="kontrol">
+      <span class="pil-tanggal" id="tgl-kini"></span>
+      <span class="teks-dibanding">dibanding</span>
+      <span class="pil-tanggal" id="tgl-lalu"></span>
+      <label class="pil-pilih">
+        <span class="sr-only">Periode</span>
+        <select id="periode">
+          <option value="harian">Harian</option>
+          <option value="mingguan">Mingguan</option>
+        </select>
+      </label>
+      <button class="pil-tombol" type="button" id="tambah-widget">Tambah widget <span aria-hidden="true">+</span></button>
+    </div>
+  </div>
+
+  <main class="bento">
+    <!-- Baris 1 -->
+    <section class="kartu kartu-twin" aria-labelledby="h-twin" data-tampil="semua">
+      <div class="kepala-kartu">
+        <h2 id="h-twin">Warung Bu Pita</h2>
+        <span class="legenda"><i class="l-sesuai"></i>sesuai <i class="l-selisih"></i>selisih</span>
+        <button class="titik3" type="button" data-ke="kesesuaian" aria-label="Buka Cek Kesesuaian">···</button>
+      </div>
+      <div class="denah" id="denah"></div>
+      <aside class="info-zona" id="info-zona" aria-live="polite" hidden></aside>
+      <div class="panel-kaca">
+        <div class="baris-tab">
+          <div class="chip-grup" role="tablist" aria-label="Lapisan data">
+            <button type="button" role="tab" data-tab="produksi">Produksi</button>
+            <button type="button" role="tab" data-tab="persediaan">Persediaan</button>
+            <button type="button" role="tab" data-tab="penjualan">Penjualan</button>
+          </div>
+          <button class="reset-kamera" type="button" id="reset-kamera">Lihat semua</button>
+        </div>
+        <p class="ringkas-zona" id="ringkas-zona" aria-live="polite">Klik zona di denah untuk melihat ringkasannya.</p>
+        <form class="tanya" id="form-tanya">
+          <span class="ikon-tanya" aria-hidden="true">✦</span>
+          <label class="sr-only" for="input-tanya">Tanya sistem</label>
+          <input id="input-tanya" autocomplete="off" placeholder="Tanya sistem, mis. kenapa stok tepung tidak sesuai?">
+          <button type="submit">Tanya</button>
+        </form>
+        <p class="jawaban" id="jawaban" aria-live="polite" hidden></p>
+      </div>
+    </section>
+
+    <section class="kartu kartu-omzet" aria-labelledby="h-omzet" data-tampil="beranda penjualan">
+      <div class="kepala-kartu">
+        <h2 id="h-omzet">Omzet Hari Ini</h2>
+        <button class="titik3" type="button" data-ke="penjualan" aria-label="Buka Penjualan">···</button>
+      </div>
+      <div class="angka-baris">
+        <strong class="angka-besar" id="omzet"></strong>
+        <span class="lencana" id="omzet-naik"></span>
+      </div>
+      <ul class="daftar-produk" id="omzet-produk"></ul>
+    </section>
+
+    <!-- Halaman selain Beranda: tabel detail di samping denah -->
+    <section class="kartu kartu-detail" aria-labelledby="h-detail" data-tampil="produksi persediaan penjualan kesesuaian laporan">
+      <div class="kepala-kartu">
+        <h2 id="h-detail"></h2>
+        <button class="titik3" type="button" data-ke="beranda" aria-label="Kembali ke Beranda">···</button>
+      </div>
+      <p class="sub" id="sub-detail"></p>
+      <div class="tabel-gulir"><table id="tabel-detail"></table></div>
+      <form class="form-fisik" id="form-fisik" hidden>
+        <h3>Catat hitungan fisik</h3>
+        <label class="lebar">Item
+          <select id="fisik-item" required></select>
+        </label>
+        <label>Jumlah fisik <small id="fisik-satuan"></small>
+          <input id="fisik-jumlah" type="number" inputmode="decimal" step="any" min="0" required>
+        </label>
+        <label>Catatan (opsional)
+          <input id="fisik-catatan" maxlength="200" placeholder="mis. dipakai adonan pagi">
+        </label>
+        <button type="submit">Simpan</button>
+        <p class="fisik-pesan" id="fisik-pesan" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <!-- Baris 2 -->
+    <section class="kartu kartu-alur" aria-labelledby="h-alur" data-tampil="beranda produksi">
+      <div class="kepala-kartu">
+        <h2 id="h-alur">Alur Jajanan</h2>
+        <button class="titik3" type="button" data-ke="produksi" aria-label="Buka Produksi">···</button>
+      </div>
+      <div class="funnel" id="funnel"></div>
+    </section>
+
+    <div class="tumpuk" data-tampil="beranda penjualan">
+      <section class="kartu kartu-dot" aria-labelledby="h-trx">
+        <div class="kepala-kartu">
+          <h2 id="h-trx">Transaksi</h2>
+          <button class="titik3" type="button" data-ke="penjualan" aria-label="Buka Penjualan">···</button>
+        </div>
+        <div class="dot-isi" id="dot-transaksi"></div>
+      </section>
+      <section class="kartu kartu-dot" aria-labelledby="h-pbl">
+        <div class="kepala-kartu">
+          <h2 id="h-pbl">Pembeli</h2>
+          <button class="titik3" type="button" data-ke="laporan" aria-label="Buka Laporan">···</button>
+        </div>
+        <div class="dot-isi" id="dot-pembeli"></div>
+      </section>
+    </div>
+
+    <a class="kartu kartu-insight" href="#kesesuaian" data-tampil="beranda persediaan" aria-label="Buka halaman Cek Kesesuaian">
+      <span class="pil-insight">✦ Insight</span>
+      <strong class="insight-angka" id="insight-skor"></strong>
+      <span class="insight-judul" id="insight-judul"></span>
+      <span class="insight-teks" id="insight-teks"></span>
+      <span class="insight-bar"><i id="insight-bar"></i></span>
+    </a>
+
+    <!-- Baris 3 -->
+    <section class="kartu kartu-jam" aria-labelledby="h-jam" data-tampil="beranda penjualan laporan">
+      <div class="kepala-kartu">
+        <h2 id="h-jam">Penjualan per Jam</h2>
+        <button class="titik3" type="button" data-ke="laporan" aria-label="Buka Laporan">···</button>
+      </div>
+      <div class="step" id="step-jam"></div>
+    </section>
+
+    <section class="kartu kartu-stok" aria-labelledby="h-stok" data-tampil="beranda">
+      <div class="kepala-kartu">
+        <h2 id="h-stok">Persediaan Bahan</h2>
+        <button class="titik3" type="button" data-ke="persediaan" aria-label="Buka Persediaan">···</button>
+      </div>
+      <div class="stok-atas" id="stok-atas"></div>
+      <ul class="daftar-stok" id="daftar-stok"></ul>
+    </section>
+  </main>
+  <p class="catatan-kaki" id="diperbarui"></p>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
