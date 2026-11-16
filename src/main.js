@@ -700,8 +700,12 @@ $("#form-masuk").addEventListener("submit", async (e) => {
 });
 $$("#masuk-contoh [data-peran]").forEach((b) => b.addEventListener("click", () => mulai(masukContoh(b.dataset.peran))));
 $$("[data-keluar]").forEach((b) => b.addEventListener("click", async () => {
-  await keluar();
-  location.reload(); // muat ulang agar data & langganan realtime milik sesi lama ikut bersih
+  b.disabled = true;
+  try {
+    await keluar();
+  } finally {
+    location.reload(); // muat ulang agar data & langganan realtime milik sesi lama ikut bersih
+  }
 }));
 
 sesiSaya().then((sesi) => (sesi ? mulai(sesi) : tampilMasuk())).catch((err) => tampilMasuk(err.message));

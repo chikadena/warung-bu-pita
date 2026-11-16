@@ -238,7 +238,23 @@ export function masukContoh(peran) {
 
 export async function keluar() {
   sesiContoh = null;
-  if (pakaiSupabase) await (await sb()).auth.signOut();
+  if (!pakaiSupabase) return;
+  let gagal = true;
+  try {
+    const { error } = await (await sb()).auth.signOut({ scope: "local" });
+    gagal = Boolean(error);
+  } catch {
+    // ditangani di bawah
+  }
+  // Bila sesi sudah kedaluwarsa/gagal diperpanjang, Supabase tidak menghapus sesi tersimpan.
+  // Hapus sendiri supaya pengguna tetap benar-benar keluar.
+  if (gagal) {
+    try {
+      Object.keys(localStorage).filter((k) => k.startsWith("sb-") && k.includes("auth-token")).forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // penyimpanan browser diblokir: tidak ada sesi tersimpan untuk dihapus
+    }
+  }
 }
 
 // Memanggil callback(data) sekarang, lalu tiap ada perubahan (Supabase Realtime) atau tiap interval polling.
