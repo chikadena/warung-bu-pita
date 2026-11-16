@@ -45,21 +45,22 @@ const dataDummy = {
   ],
   // Cek kesesuaian: catatan digital vs hitungan fisik per zona.
   cek: [
-    { id: "tepung", tab: "persediaan", zona: "zona_persiapan", nama: "Tepung terigu", satuan: "kg", digital: 12, fisik: 10.5,
+    { id: "tepung", tab: "persediaan", zona: "zona_persiapan", nama: "Tepung terigu", satuan: "kg", digital: 12, fisik: 10.5, minimum: 5,
       catatan: "Pemakaian adonan risol pagi belum dicatat (±1,5 kg)." },
-    { id: "kulit_risol", tab: "persediaan", zona: "zona_gudang_stok", nama: "Kulit risol", satuan: "lembar", digital: 120, fisik: 120 },
-    { id: "isi_bakso", tab: "persediaan", zona: "zona_gudang_stok", nama: "Bakso mentah", satuan: "butir", digital: 150, fisik: 150 },
-    { id: "pisang_kepok", tab: "persediaan", zona: "zona_gudang_stok", nama: "Pisang kepok", satuan: "buah", digital: 25, fisik: 25 },
-    { id: "coklat", tab: "persediaan", zona: "zona_gudang_stok", nama: "Meses coklat", satuan: "bungkus", digital: 6, fisik: 6 },
-    { id: "minyak", tab: "persediaan", zona: "zona_penggorengan", nama: "Minyak goreng", satuan: "liter", digital: 5, fisik: 5 },
-    { id: "goreng_bakso", tab: "produksi", zona: "zona_penggorengan", nama: "Bakso goreng digoreng", satuan: "pcs", digital: 80, fisik: 80 },
-    { id: "goreng_pisang", tab: "produksi", zona: "zona_penggorengan", nama: "Pisang coklat digoreng", satuan: "pcs", digital: 60, fisik: 60 },
-    { id: "gulung_risol", tab: "produksi", zona: "zona_persiapan", nama: "Risol digulung", satuan: "pcs", digital: 45, fisik: 45 },
-    { id: "sisa_bakso", tab: "penjualan", zona: "zona_etalase", nama: "Sisa bakso goreng", satuan: "pcs", digital: 7, fisik: 7 },
-    { id: "sisa_pisang", tab: "penjualan", zona: "zona_etalase", nama: "Sisa pisang coklat", satuan: "pcs", digital: 6, fisik: 6 },
-    { id: "sisa_risol", tab: "penjualan", zona: "zona_etalase", nama: "Sisa risol", satuan: "pcs", digital: 7, fisik: 7 },
+    { id: "kulit_risol", tab: "persediaan", zona: "zona_gudang_stok", nama: "Kulit risol", satuan: "lembar", digital: 120, fisik: 120, minimum: 60 },
+    { id: "isi_bakso", tab: "persediaan", zona: "zona_gudang_stok", nama: "Bakso mentah", satuan: "butir", digital: 150, fisik: 150, minimum: 100 },
+    { id: "pisang_kepok", tab: "persediaan", zona: "zona_gudang_stok", nama: "Pisang kepok", satuan: "buah", digital: 25, fisik: 25, minimum: 30 },
+    { id: "coklat", tab: "persediaan", zona: "zona_gudang_stok", nama: "Meses coklat", satuan: "bungkus", digital: 6, fisik: 6, minimum: 4 },
+    { id: "minyak", tab: "persediaan", zona: "zona_penggorengan", nama: "Minyak goreng", satuan: "liter", digital: 5, fisik: 5, minimum: 4 },
+    { id: "goreng_bakso", tab: "produksi", zona: "zona_penggorengan", nama: "Bakso goreng digoreng", satuan: "pcs", digital: 80, fisik: 80, produk_id: "bakso" },
+    { id: "goreng_pisang", tab: "produksi", zona: "zona_penggorengan", nama: "Pisang coklat digoreng", satuan: "pcs", digital: 60, fisik: 60, produk_id: "pisang" },
+    { id: "gulung_risol", tab: "produksi", zona: "zona_persiapan", nama: "Risol digulung", satuan: "pcs", digital: 45, fisik: 45, produk_id: "risol" },
+    { id: "sisa_bakso", tab: "penjualan", zona: "zona_etalase", nama: "Sisa bakso goreng", satuan: "pcs", digital: 7, fisik: 7, produk_id: "bakso" },
+    { id: "sisa_pisang", tab: "penjualan", zona: "zona_etalase", nama: "Sisa pisang coklat", satuan: "pcs", digital: 6, fisik: 6, produk_id: "pisang" },
+    { id: "sisa_risol", tab: "penjualan", zona: "zona_etalase", nama: "Sisa risol", satuan: "pcs", digital: 7, fisik: 7, produk_id: "risol" },
     { id: "kas", tab: "penjualan", zona: "zona_uang", nama: "Uang di kaleng", satuan: "Rp", digital: 412000, fisik: 412000 },
   ],
+  produksi: [],
   skorMingguLalu: 88,
   rekonsiliasi: { ditemukan: 12, selesai: 11 },
 };
@@ -85,12 +86,14 @@ async function sb() {
 async function ambilDariSupabase() {
   const db = await sb();
   const tanya = (q) => q.then(({ data, error }) => { if (error) throw error; return data; });
-  const [produk, cek, hari, jam, atur] = await Promise.all([
+  const [produk, cek, hari, jam, atur, produksi] = await Promise.all([
     tanya(db.from("produk").select("*").order("urutan")),
     tanya(db.from("cek_kesesuaian").select("*").order("urutan")),
     tanya(db.from("penjualan_harian").select("*").order("tanggal", { ascending: false }).limit(31)),
     tanya(db.from("penjualan_jam").select("*").order("jam")),
     tanya(db.from("pengaturan").select("*")),
+    // tabel produksi baru ada setelah input-operator.sql dijalankan; tanpa itu dashboard tetap jalan
+    tanya(db.from("produksi").select("id, produk_id, jumlah, status, dibuat_pada").order("id", { ascending: false }).limit(20)).catch(() => []),
   ]);
   const p = Object.fromEntries(atur.map((r) => [r.kunci, r.nilai]));
   return {
@@ -100,7 +103,9 @@ async function ambilDariSupabase() {
     cek: cek.map((r) => ({
       id: r.id, tab: r.tab, zona: r.zona, nama: r.nama, satuan: r.satuan,
       digital: Number(r.digital), fisik: Number(r.fisik), ...(r.catatan ? { catatan: r.catatan } : {}),
+      minimum: r.minimum == null ? null : Number(r.minimum), produk_id: r.produk_id ?? null,
     })),
+    produksi,
     skorMingguLalu: p.skor_minggu_lalu,
     rekonsiliasi: p.rekonsiliasi,
   };
@@ -144,6 +149,30 @@ export async function simpanHitunganFisik(id, fisik, catatan) {
   if (!item) throw new Error("Item tidak ditemukan.");
   item.fisik = isi.fisik;
   if (isi.catatan) item.catatan = isi.catatan; else delete item.catatan;
+}
+
+// ---------- Input Operator (fungsi di supabase/input-operator.sql) ----------
+// Fungsi database memeriksa peran Operator dan mengubah beberapa tabel sekaligus.
+async function panggil(fungsi, argumen) {
+  if (!pakaiSupabase) throw new Error("Fitur ini butuh koneksi Supabase.");
+  const { data, error } = await (await sb()).rpc(fungsi, argumen);
+  if (error) {
+    if (error.code === "PGRST202") throw new Error("Fungsi input belum dipasang. Jalankan supabase/input-operator.sql di Supabase.");
+    throw new Error(error.message);
+  }
+  return data;
+}
+const bulatPositif = (n, label) => {
+  if (!Number.isInteger(n) || n <= 0) throw new Error(`${label} harus bilangan bulat lebih dari 0.`);
+  return n;
+};
+export const catatProduksi = async (produk, jumlah) => panggil("catat_produksi", { p_produk: produk, p_jumlah: bulatPositif(jumlah, "Jumlah produksi") });
+export const selesaikanProduksi = async (id) => panggil("selesaikan_produksi", { p_id: id });
+export const catatPenjualan = async (produk, jumlah) => panggil("catat_penjualan", { p_produk: produk, p_jumlah: bulatPositif(jumlah, "Jumlah terjual") });
+export async function ubahStok(id, digital, minimum) {
+  if (!Number.isFinite(digital) || digital < 0) throw new Error("Stok harus angka 0 atau lebih.");
+  if (minimum != null && (!Number.isFinite(minimum) || minimum < 0)) throw new Error("Batas minimum harus angka 0 atau lebih.");
+  return panggil("ubah_stok", { p_id: id, p_digital: digital, p_minimum: minimum ?? null });
 }
 
 // ---------- Login & peran ----------

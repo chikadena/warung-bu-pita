@@ -135,7 +135,31 @@
       </div>
       <p class="sub" id="sub-detail"></p>
       <div class="tabel-gulir"><table id="tabel-detail"></table></div>
-      <form class="form-fisik khusus-operator" id="form-fisik" hidden>
+      <div class="daftar-produksi" id="daftar-produksi" data-halaman="produksi" hidden></div>
+      <form class="form-fisik khusus-operator" id="form-produksi" data-halaman="produksi" hidden>
+        <h3>Catat produksi</h3>
+        <label>Produk <select name="produk" data-pilih-produk required></select></label>
+        <label>Jumlah dibuat (pcs) <input name="jumlah" type="number" inputmode="numeric" min="1" step="1" required></label>
+        <button type="submit">Catat produksi</button>
+        <p class="fisik-pesan" aria-live="polite"></p>
+      </form>
+      <form class="form-fisik khusus-operator" id="form-stok" data-halaman="persediaan" hidden>
+        <h3>Ubah stok</h3>
+        <label class="lebar">Item <select name="item" required></select></label>
+        <label>Stok tercatat <small data-satuan></small> <input name="digital" type="number" inputmode="decimal" min="0" step="any" required></label>
+        <label>Batas minimum <input name="minimum" type="number" inputmode="decimal" min="0" step="any" placeholder="opsional"></label>
+        <button type="submit">Simpan stok</button>
+        <p class="fisik-pesan" aria-live="polite"></p>
+      </form>
+      <form class="form-fisik khusus-operator" id="form-jual" data-halaman="penjualan" hidden>
+        <h3>Catat penjualan</h3>
+        <label>Produk <select name="produk" data-pilih-produk required></select></label>
+        <label>Jumlah terjual (pcs) <input name="jumlah" type="number" inputmode="numeric" min="1" step="1" required></label>
+        <p class="lebar total-jual" data-total></p>
+        <button type="submit">Catat penjualan</button>
+        <p class="fisik-pesan" aria-live="polite"></p>
+      </form>
+      <form class="form-fisik khusus-operator" id="form-fisik" data-halaman="kesesuaian" hidden>
         <h3>Catat hitungan fisik</h3>
         <label class="lebar">Item
           <select id="fisik-item" required></select>

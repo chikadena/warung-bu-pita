@@ -2,7 +2,10 @@ import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "./style.css";
-import { subscribeRealtime, ambilData, simpanHitunganFisik, sesiSaya, masuk, masukContoh, keluar, pakaiSupabase, ZONA } from "./data.js";
+import {
+  subscribeRealtime, ambilData, simpanHitunganFisik, sesiSaya, masuk, masukContoh, keluar, pakaiSupabase, ZONA,
+  catatProduksi, selesaikanProduksi, catatPenjualan, ubahStok,
+} from "./data.js";
 import { buatDenah } from "./scene.js";
 import { tanyaSistem, ringkasZona } from "./tanya.js";
 
@@ -30,6 +33,8 @@ const denah = buatDenah($("#denah"), { onPilih: (id) => pilihZona(id) });
 
 // ---------- turunan data ----------
 const sesuai = (c) => c.fisik === c.digital;
+// UC-07: stok tercatat di bawah batas minimum yang diatur Operator.
+const menipis = (c) => c.minimum != null && c.digital < c.minimum;
 const cekTab = (tab) => state.data.cek.filter((c) => !tab || c.tab === tab);
 function statusZona(tab) {
   const peta = {};
@@ -123,8 +128,11 @@ function renderInsight() {
     (beda.length ? ` Tersisa: ${beda.map((c) => `${c.nama} di ${ZONA[c.zona].toLowerCase()}`).join(", ")}.` : "");
   $("#insight-bar").style.width = (d.rekonsiliasi.selesai / d.rekonsiliasi.ditemukan) * 100 + "%";
   const notif = $(".titik-notif");
-  notif.hidden = !beda.length;
-  $("#lonceng").setAttribute("aria-label", beda.length ? `${beda.length} selisih belum beres, buka Cek Kesesuaian` : "Tidak ada selisih");
+  const tipis = d.cek.filter(menipis);
+  notif.hidden = !beda.length && !tipis.length;
+  const pesan = [beda.length && `${beda.length} selisih belum beres`, tipis.length && `${tipis.length} stok menipis`].filter(Boolean).join(", ");
+  $("#lonceng").setAttribute("aria-label", pesan ? `${pesan}. Buka Cek Kesesuaian` : "Tidak ada peringatan");
+  $("#lonceng").title = pesan || "Tidak ada peringatan";
 }
 
 function renderJam() {
@@ -154,14 +162,14 @@ function renderStok() {
   const ok = isi.filter(sesuai).length;
   $("#stok-atas").innerHTML = `
     <strong>${ok}<span>/${isi.length}</span></strong>
-    <p>bahan cocok antara catatan<br>dan hitungan fisik</p>
+    <p>bahan cocok antara catatan<br>dan hitungan fisik${isi.some(menipis) ? `<br><b class="teks-menipis">${isi.filter(menipis).length} bahan menipis</b>` : ""}</p>
     <span class="segmen" aria-hidden="true">${isi.map((c) => `<i class="${sesuai(c) ? "" : "beda"}"></i>`).join("")}</span>`;
   $("#daftar-stok").innerHTML = isi.map((c) => {
     const cocok = sesuai(c);
     const persenFisik = Math.min(100, (c.fisik / c.digital) * 100);
     return `<li data-zona="${c.zona}" data-tab="persediaan" tabindex="0" class="${cocok ? "" : "beda"} ${c.zona === state.zona ? "terpilih" : ""}"
         aria-label="${esc(c.nama)}: fisik ${angka(c.fisik)} ${esc(c.satuan)}, catatan ${angka(c.digital)} ${esc(c.satuan)}, ${cocok ? "sesuai" : "selisih"}">
-      <span class="stok-nama">${esc(c.nama)}<small>${ZONA[c.zona]}</small></span>
+      <span class="stok-nama">${esc(c.nama)}${menipis(c) ? ` <span class="chip-menipis">Menipis · min ${angka(c.minimum)}</span>` : ""}<small>${ZONA[c.zona]}</small></span>
       <span class="stok-bar"><i style="--w:${persenFisik}%;--c:${cocok ? "var(--hijau)" : "var(--merah)"}"></i></span>
       <span class="stok-nilai"><b>${angka(c.fisik)} ${esc(c.satuan)}</b><small>${cocok ? "sesuai catatan" : `catatan ${angka(c.digital)} · ${tanda(c.fisik - c.digital)}`}</small></span>
       ${!cocok && c.catatan ? `<span class="stok-catatan">${esc(c.catatan)}</span>` : ""}
@@ -183,7 +191,7 @@ function renderTabel() {
   renderStok();
   const h = state.halaman;
   if (h === "beranda") return;
-  $("#form-fisik").hidden = h === "laporan";
+  $$("[data-halaman]").forEach((el) => (el.hidden = el.dataset.halaman !== h));
   if (h === "laporan") {
     $("#h-detail").textContent = "Rekap 7 Hari";
     $("#sub-detail").textContent = `Total omzet ${rp(state.data.minggu.reduce((n, d) => n + d.omzet, 0))}, ${rentang(state.data.minggu)}`;
@@ -193,9 +201,53 @@ function renderTabel() {
   }
   const isi = cekTab(state.tab);
   $("#h-detail").textContent = state.tab ? `Catatan ${state.tab}` : "Semua catatan";
-  $("#sub-detail").textContent = `${isi.filter(sesuai).length} dari ${isi.length} sesuai. Klik baris untuk melihat zonanya di denah.`;
+  const tipis = isi.filter(menipis);
+  $("#sub-detail").textContent = `${isi.filter(sesuai).length} dari ${isi.length} sesuai.` +
+    (tipis.length ? ` Stok menipis: ${tipis.map((c) => c.nama).join(", ")}.` : "") + " Klik baris untuk melihat zonanya di denah.";
   $("#tabel-detail").innerHTML = KEPALA_CEK + `<tbody>${isi.map((c) => barisCek(c)).join("")}</tbody>`;
   renderFormFisik(isi);
+  renderFormOperator();
+}
+
+// ---------- tahap 2: form input Operator ----------
+// Pilihan dropdown diisi ulang tanpa menghapus pilihan yang sedang aktif.
+function isiPilihan(sel, opsi) {
+  const lama = sel.value;
+  sel.innerHTML = opsi.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join("");
+  if (opsi.some(([v]) => v === lama)) sel.value = lama;
+}
+const itemStok = () => state.data.cek.filter((c) => c.tab === "persediaan" || (c.tab === "penjualan" && c.produk_id));
+function renderFormOperator() {
+  const produk = state.data.produk.map((p) => [p.id, `${p.nama} (${rp(p.harga)})`]);
+  $$("[data-pilih-produk]").forEach((sel) => isiPilihan(sel, produk));
+  const selStok = $("#form-stok [name=item]");
+  const lama = selStok.value;
+  isiPilihan(selStok, itemStok().map((c) => [c.id, `${c.nama} — ${ZONA[c.zona]}`]));
+  if (selStok.value !== lama) isiFormStok();
+  hitungTotalJual();
+  const proses = (state.data.produksi ?? []).filter((x) => x.status === "proses");
+  const namaProduk = (id) => state.data.produk.find((p) => p.id === id)?.nama ?? id;
+  const jam = (t) => new Date(t).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  $("#daftar-produksi").innerHTML = `<h3>Produksi sedang berjalan</h3>` + (proses.length
+    ? `<ul>${proses.map((x) => `<li><span>${esc(namaProduk(x.produk_id))}<small>${angka(x.jumlah)} pcs · dicatat ${jam(x.dibuat_pada)}</small></span>
+        ${state.sesi?.peran === "operator" ? `<button type="button" data-selesai="${x.id}">Tandai selesai</button>` : ""}</li>`).join("")}</ul>`
+    : `<p class="sub">Tidak ada produksi yang sedang berjalan.</p>`);
+}
+function isiFormStok() {
+  const c = state.data.cek.find((x) => x.id === $("#form-stok [name=item]").value);
+  if (!c) return;
+  $("#form-stok [name=digital]").value = c.digital;
+  $("#form-stok [name=minimum]").value = c.minimum ?? "";
+  $("#form-stok [data-satuan]").textContent = `(${c.satuan})`;
+}
+function hitungTotalJual() {
+  const f = $("#form-jual");
+  const p = state.data.produk.find((x) => x.id === f.produk.value);
+  const sisa = state.data.cek.find((c) => c.produk_id === p?.id && c.tab === "penjualan")?.digital;
+  const n = f.jumlah.valueAsNumber;
+  f.querySelector("[data-total]").textContent = p
+    ? `Stok etalase: ${angka(sisa ?? 0)} pcs` + (n > 0 ? ` · Total: ${rp(n * p.harga)}` : "")
+    : "";
 }
 
 // Form "Catat hitungan fisik": pilihan item mengikuti tab aktif; nilai yang sedang diketik tidak ditimpa.
@@ -372,6 +424,67 @@ function teksSumber() {
 }
 
 $("#fisik-item").addEventListener("change", isiFormFisik);
+
+// Kirim form Operator: tombol dikunci selama proses, pesan hasil di bawah form, data dimuat ulang setelah berhasil.
+function pasangForm(id, aksi) {
+  const f = $(id);
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const tombol = f.querySelector("button[type=submit]");
+    const pesan = f.querySelector(".fisik-pesan");
+    tombol.disabled = true;
+    pesan.className = "fisik-pesan";
+    pesan.textContent = "Menyimpan…";
+    try {
+      const teks = await aksi(f);
+      state.data = await ambilData();
+      render();
+      pesan.textContent = teks;
+      pesan.classList.add("ok");
+    } catch (err) {
+      console.error(err);
+      pesan.textContent = "Gagal: " + (err.message ?? err);
+      pesan.classList.add("gagal");
+    } finally {
+      tombol.disabled = false;
+    }
+  });
+}
+const namaProduk = (id) => state.data.produk.find((p) => p.id === id)?.nama ?? id;
+pasangForm("#form-produksi", async (f) => {
+  await catatProduksi(f.produk.value, f.jumlah.valueAsNumber);
+  const teks = `Produksi ${namaProduk(f.produk.value)} ${f.jumlah.value} pcs dicatat. Tandai selesai bila sudah matang.`;
+  f.jumlah.value = "";
+  return teks;
+});
+pasangForm("#form-stok", async (f) => {
+  const min = f.minimum.value === "" ? null : f.minimum.valueAsNumber;
+  await ubahStok(f.item.value, f.digital.valueAsNumber, min);
+  return "Stok tersimpan.";
+});
+pasangForm("#form-jual", async (f) => {
+  const total = await catatPenjualan(f.produk.value, f.jumlah.valueAsNumber);
+  const teks = `Penjualan ${namaProduk(f.produk.value)} ${f.jumlah.value} pcs dicatat (${rp(total)}).`;
+  f.jumlah.value = "";
+  hitungTotalJual();
+  return teks;
+});
+$("#form-stok [name=item]").addEventListener("change", isiFormStok);
+$("#form-jual").addEventListener("input", hitungTotalJual);
+$("#daftar-produksi").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-selesai]");
+  if (!b) return;
+  b.disabled = true;
+  try {
+    await selesaikanProduksi(Number(b.dataset.selesai));
+    state.data = await ambilData();
+    render();
+    toast("Produksi selesai, stok etalase bertambah.");
+  } catch (err) {
+    b.disabled = false;
+    toast("Gagal: " + err.message);
+  }
+});
 $("#form-fisik").addEventListener("submit", async (e) => {
   e.preventDefault();
   const pesan = $("#fisik-pesan");
