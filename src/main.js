@@ -133,8 +133,18 @@ function renderInsight() {
   const tipis = d.cek.filter(menipis);
   notif.hidden = !beda.length && !tipis.length;
   const pesan = [beda.length && `${beda.length} selisih belum beres`, tipis.length && `${tipis.length} stok menipis`].filter(Boolean).join(", ");
-  $("#lonceng").setAttribute("aria-label", pesan ? `${pesan}. Buka Cek Kesesuaian` : "Tidak ada peringatan");
-  $("#lonceng").title = pesan || "Tidak ada peringatan";
+  $("#lonceng").setAttribute("aria-label", `Peringatan: ${pesan || "tidak ada"}`);
+  // isi panel lonceng: klik satu peringatan = pilih zonanya di denah 3D
+  const nilai = (c, n) => (c.satuan === "Rp" ? rp(n) : `${angka(n)} ${esc(c.satuan)}`);
+  const item = [
+    ...beda.map((c) => ({ c, tab: c.tab, jenis: "beda", judul: `${c.nama} tidak sesuai`, isi: `catatan ${nilai(c, c.digital)}, fisik ${nilai(c, c.fisik)}` })),
+    ...tipis.map((c) => ({ c, tab: "persediaan", jenis: "tipis", judul: `${c.nama} menipis`, isi: `tersisa ${nilai(c, c.digital)}, minimum ${nilai(c, c.minimum)}` })),
+  ];
+  $("#panel-notif").innerHTML = `<p class="panel-judul">Peringatan</p>` + (item.length
+    ? `<ul>${item.map((x) => `<li><button type="button" class="${x.jenis}" data-zona="${x.c.zona}" data-tab="${x.tab}">
+        <b>${esc(x.judul)}</b><small>${x.isi} · ${ZONA[x.c.zona]}</small></button></li>`).join("")}</ul>`
+    : `<p class="sub">Tidak ada peringatan. Semua catatan sesuai dan stok aman.</p>`) +
+    `<a href="#kesesuaian" class="panel-tautan">Buka Cek Kesesuaian →</a>`;
 }
 
 function renderJam() {
@@ -177,16 +187,6 @@ function renderStok() {
       ${!cocok && c.catatan ? `<span class="stok-catatan">${esc(c.catatan)}</span>` : ""}
     </li>`;
   }).join("");
-}
-
-function renderStatusBuka() {
-  // jam buka warung 06.00–19.00
-  const jam = new Date().getHours();
-  const buka = jam >= 6 && jam < 19;
-  const el = $("#status-buka");
-  el.classList.toggle("tutup", !buka);
-  el.querySelector("span").innerHTML = buka ? "Buka<small> · s.d. 19.00</small>" : "Tutup<small> · buka 06.00</small>";
-  el.title = "Jam buka warung 06.00–19.00";
 }
 
 function renderTabel() {
@@ -309,7 +309,6 @@ function renderTanggal() {
 function render() {
   if (!state.data) return;
   renderTanggal();
-  renderStatusBuka();
   renderOmzet();
   renderFunnel();
   renderDot("#dot-transaksi", "transaksi", "hijau");
@@ -484,9 +483,18 @@ $("#funnel").addEventListener("pointerover", (e) => {
 $("#funnel").addEventListener("focusin", (e) => e.target.closest(".kolom")?.dispatchEvent(new Event("pointerover", { bubbles: true })));
 $("#reset-kamera").addEventListener("click", () => { state.zona = null; denah.pilih(null); render(); });
 $("#periode").addEventListener("change", (e) => { state.periode = e.target.value; render(); });
-$("#salin-tautan").addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(location.href); toast("Tautan disalin"); }
-  catch { toast("Tidak bisa menyalin tautan di browser ini"); }
+// Panel lonceng: buka/tutup, tutup saat klik di luar atau Escape.
+function aturPanelNotif(buka) {
+  $("#panel-notif").hidden = !buka;
+  $("#lonceng").setAttribute("aria-expanded", String(buka));
+}
+$("#lonceng").addEventListener("click", () => aturPanelNotif($("#panel-notif").hidden));
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".wadah-notif")) aturPanelNotif(false);
+  else if (e.target.closest("#panel-notif a, #panel-notif [data-zona]")) aturPanelNotif(false);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("#panel-notif").hidden) { aturPanelNotif(false); $("#lonceng").focus(); }
 });
 $("#tombol-cari").addEventListener("click", () => {
   if (state.halaman !== "beranda" && !TAB.includes(state.halaman)) location.hash = "beranda";
@@ -661,7 +669,7 @@ function mulai(sesi) {
     const jejak = JSON.stringify(isi);
     state.data = data;
     if (jejak !== jejakData) { jejakData = jejak; render(); }
-    else { renderStatusBuka(); $("#diperbarui").textContent = teksSumber(); }
+    else $("#diperbarui").textContent = teksSumber();
   });
   bukaHalaman();
 }

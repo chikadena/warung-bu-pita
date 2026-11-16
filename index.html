@@ -13,8 +13,7 @@
       <img src="./src/assets/logo-wbp.png" alt="Logo Warung Bu Pita" width="1512" height="1040">
     </div>
     <div class="masuk-isi">
-      <p class="masuk-label">Masuk</p>
-      <h1>Selamat datang kembali!</h1>
+      <h1>Silakan masuk</h1>
       <p class="sub">Web Monitoring UMKM Warung Bu Pita</p>
       <form id="form-masuk">
         <label>Email <input id="masuk-email" type="email" autocomplete="username" placeholder="nama@email.com" required></label>
@@ -53,11 +52,13 @@
       <button class="bulat" type="button" id="tombol-cari" aria-label="Tanya sistem">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>
       </button>
-      <a class="bulat lonceng" href="#kesesuaian" id="lonceng" aria-label="Notifikasi selisih">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg>
-        <span class="titik-notif" hidden></span>
-      </a>
-      <span class="status-buka" id="status-buka"><i></i><span></span></span>
+      <div class="wadah-notif">
+        <button class="bulat lonceng" type="button" id="lonceng" aria-label="Peringatan" aria-expanded="false" aria-controls="panel-notif">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg>
+          <span class="titik-notif" hidden></span>
+        </button>
+        <div class="panel-notif" id="panel-notif" role="region" aria-label="Daftar peringatan" hidden></div>
+      </div>
       <button type="button" class="pil-peran" id="pil-peran" data-keluar>
         <span id="nama-peran"></span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg>
@@ -68,9 +69,6 @@
   <div class="kepala">
     <div class="judul">
       <h1 id="judul-halaman">Ringkasan</h1>
-      <button class="bulat kecil" type="button" id="salin-tautan" aria-label="Salin tautan halaman">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>
-      </button>
     </div>
     <div class="kontrol">
       <span class="pil-tanggal">
