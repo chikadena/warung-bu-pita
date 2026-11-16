@@ -433,7 +433,7 @@ tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--biru); }
 /* ---------- form catat hitungan fisik ---------- */
 .form-fisik { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--garis); }
 .form-fisik h3 { grid-column: 1 / -1; margin: 0; font-size: 13px; font-weight: 500; }
-.form-fisik label { display: grid; gap: 4px; font-size: 12px; color: var(--abu); min-width: 0; }
+.form-fisik label { display: grid; gap: 4px; align-content: end; font-size: 12px; color: var(--abu); min-width: 0; } /* label yang terlipat 2 baris tidak menggeser kotak isian */
 .form-fisik label small { font-size: 11px; }
 .form-fisik .lebar { grid-column: 1 / -1; }
 .form-fisik select, .form-fisik input {
@@ -517,7 +517,7 @@ body:not([data-peran="pemilik"]) .khusus-pemilik { display: none !important; }
 .kartu-sim-atur, .kartu-sim-simpan { grid-column: span 4; }
 .kartu-sim-hasil { grid-column: span 8; }
 .form-sim { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
-.form-sim label { display: grid; gap: 4px; font-size: 12px; color: var(--abu); }
+.form-sim label { display: grid; gap: 4px; align-content: end; font-size: 12px; color: var(--abu); }
 .form-sim .lebar { grid-column: 1 / -1; }
 .form-sim input { height: 36px; padding: 0 10px; border: 1px solid var(--garis); border-radius: 10px; background: var(--kartu); color: var(--teks); font-size: 13px; min-width: 0; }
 .form-sim input:focus { outline: none; border-color: var(--biru); }
@@ -578,3 +578,6 @@ body[data-halaman="simulasi"] .kontrol { visibility: hidden; }
 .panel-notif small { font-size: 11px; color: var(--abu); }
 .panel-tautan { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 500; color: var(--biru); text-decoration: none; }
 .panel-tautan:hover { text-decoration: underline; }
+/* baris total di bawah tabel Laporan */
+tfoot th, tfoot td { padding-top: 14px; border-top: 2px solid var(--teks); border-bottom: 0; font-weight: 600; color: var(--teks); }
+tfoot .total-besar { font-size: 20px; letter-spacing: -0.02em; }

@@ -196,9 +196,12 @@ function renderTabel() {
   $$("[data-halaman]").forEach((el) => (el.hidden = el.dataset.halaman !== h));
   if (h === "laporan") {
     $("#h-detail").textContent = "Rekap 7 Hari";
-    $("#sub-detail").textContent = `Total omzet ${rp(state.data.minggu.reduce((n, d) => n + d.omzet, 0))}, ${rentang(state.data.minggu)}`;
+    const M = state.data.minggu;
+    const total = (k) => M.reduce((n, d) => n + d[k], 0);
+    $("#sub-detail").textContent = rentang(M);
     $("#tabel-detail").innerHTML = `<thead><tr><th>Hari</th><th class="num">Omzet</th><th class="num">Transaksi</th><th class="num">Pembeli</th></tr></thead><tbody>` +
-      state.data.minggu.map((d) => `<tr><td>${d.hari}</td><td class="num">${rp(d.omzet)}</td><td class="num">${d.transaksi}</td><td class="num">${d.pembeli}</td></tr>`).join("") + "</tbody>";
+      M.map((d) => `<tr><td>${d.hari}</td><td class="num">${rp(d.omzet)}</td><td class="num">${d.transaksi}</td><td class="num">${d.pembeli}</td></tr>`).join("") + "</tbody>" +
+      `<tfoot><tr><th>Total</th><td class="num total-besar">${rp(total("omzet"))}</td><td class="num">${angka(total("transaksi"))}</td><td class="num">${angka(total("pembeli"))}</td></tr></tfoot>`;
     return;
   }
   const isi = cekTab(state.tab);
