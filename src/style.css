@@ -523,3 +523,48 @@ body:not([data-peran="operator"]) .khusus-operator { display: none !important; }
 .chip-menipis { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, #e35f14 14%, transparent); color: #c4500f; font-size: 10px; font-weight: 600; vertical-align: 1px; }
 .teks-menipis { color: #c4500f; font-weight: 600; }
 @media (prefers-color-scheme: dark) { .chip-menipis, .teks-menipis { color: #ff9a5c; } }
+
+/* ---------- tahap 3: simulasi (Pemilik) ---------- */
+body:not([data-peran="pemilik"]) .khusus-pemilik { display: none !important; }
+.kartu-sim-atur, .kartu-sim-simpan { grid-column: span 4; }
+.kartu-sim-hasil { grid-column: span 8; }
+.form-sim { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.form-sim label { display: grid; gap: 4px; font-size: 12px; color: var(--abu); }
+.form-sim .lebar { grid-column: 1 / -1; }
+.form-sim input { height: 36px; padding: 0 10px; border: 1px solid var(--garis); border-radius: 10px; background: var(--kartu); color: var(--teks); font-size: 13px; min-width: 0; }
+.form-sim input:focus { outline: none; border-color: var(--biru); }
+.form-sim button { height: 36px; border: 0; border-radius: 10px; background: #111; color: #fff; font-size: 13px; font-weight: 500; }
+.form-sim button.sekunder { background: var(--kartu); color: var(--teks); border: 1px solid var(--garis); }
+.form-sim button:disabled { opacity: 0.5; cursor: wait; }
+@media (prefers-color-scheme: dark) { .form-sim button:not(.sekunder) { background: #f2f2f2; color: #111; } }
+.sim-produk { display: grid; gap: 6px; }
+.sim-kepala, .sim-baris { display: grid; grid-template-columns: 1.3fr 1fr 0.8fr; gap: 8px; align-items: center; }
+.sim-kepala { font-size: 11px; color: var(--abu); }
+.sim-baris span { font-size: 13px; font-weight: 500; }
+.sim-kpi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.sim-kpi div { display: grid; gap: 2px; padding: 12px; border: 1px solid var(--garis); border-radius: 14px; }
+.sim-kpi small { font-size: 11px; color: var(--abu); }
+.sim-kpi strong { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+.sim-ringkas { font-size: 13px; padding: 10px 12px; border-radius: 12px; margin-bottom: 6px; }
+.sim-ringkas.ok { background: color-mix(in srgb, var(--hijau) 10%, transparent); }
+.sim-ringkas.beda { background: color-mix(in srgb, var(--merah) 10%, transparent); color: var(--merah); }
+.kartu-sim-hasil .tabel-gulir + .tabel-gulir { margin-top: 14px; }
+tr.baris-kurang td { color: var(--merah); }
+.daftar-skenario { list-style: none; margin: 10px 0 0; padding: 0; }
+.daftar-skenario li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid var(--garis); font-size: 13px; }
+.daftar-skenario li:first-child { border-top: 0; }
+.daftar-skenario li.kosong { color: var(--abu); }
+.daftar-skenario small { display: block; font-size: 11px; color: var(--abu); }
+.aksi-skenario { display: flex; gap: 6px; }
+.aksi-skenario button { height: 28px; padding: 0 10px; border: 1px solid var(--garis); border-radius: 999px; background: var(--kartu); font-size: 12px; }
+.aksi-skenario button:hover { background: var(--abu-muda); }
+.aksi-skenario [data-hapus] { color: var(--merah); }
+@media (max-width: 1180px) {
+  .kartu-sim-atur, .kartu-sim-simpan { grid-column: span 3; }
+  .kartu-sim-hasil { grid-column: 1 / -1; }
+}
+@media (max-width: 520px) {
+  .sim-kpi { grid-template-columns: 1fr; }
+}
+/* pilihan periode tidak berlaku di halaman Simulasi */
+body[data-halaman="simulasi"] .kontrol { visibility: hidden; }

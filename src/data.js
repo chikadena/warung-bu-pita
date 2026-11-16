@@ -61,6 +61,13 @@ const dataDummy = {
     { id: "kas", tab: "penjualan", zona: "zona_uang", nama: "Uang di kaleng", satuan: "Rp", digital: 412000, fisik: 412000 },
   ],
   produksi: [],
+  skenario: [],
+  // Takaran bahan per 1 pcs (sama dengan pengaturan "resep" di supabase/simulasi.sql).
+  resep: {
+    bakso: { isi_bakso: 1, tepung: 0.02, minyak: 0.01 },
+    pisang: { pisang_kepok: 0.5, coklat: 0.05, tepung: 0.03, minyak: 0.01 },
+    risol: { kulit_risol: 1, tepung: 0.02, minyak: 0.01 },
+  },
   skorMingguLalu: 88,
   rekonsiliasi: { ditemukan: 12, selesai: 11 },
 };
@@ -86,7 +93,7 @@ async function sb() {
 async function ambilDariSupabase() {
   const db = await sb();
   const tanya = (q) => q.then(({ data, error }) => { if (error) throw error; return data; });
-  const [produk, cek, hari, jam, atur, produksi] = await Promise.all([
+  const [produk, cek, hari, jam, atur, produksi, skenario] = await Promise.all([
     tanya(db.from("produk").select("*").order("urutan")),
     tanya(db.from("cek_kesesuaian").select("*").order("urutan")),
     tanya(db.from("penjualan_harian").select("*").order("tanggal", { ascending: false }).limit(31)),
@@ -94,6 +101,8 @@ async function ambilDariSupabase() {
     tanya(db.from("pengaturan").select("*")),
     // tabel produksi baru ada setelah input-operator.sql dijalankan; tanpa itu dashboard tetap jalan
     tanya(db.from("produksi").select("id, produk_id, jumlah, status, dibuat_pada").order("id", { ascending: false }).limit(20)).catch(() => []),
+    // tabel skenario baru ada setelah simulasi.sql dijalankan
+    tanya(db.from("skenario").select("id, nama, parameter, hasil, dibuat_pada").order("id", { ascending: false }).limit(20)).catch(() => []),
   ]);
   const p = Object.fromEntries(atur.map((r) => [r.kunci, r.nilai]));
   return {
@@ -106,6 +115,8 @@ async function ambilDariSupabase() {
       minimum: r.minimum == null ? null : Number(r.minimum), produk_id: r.produk_id ?? null,
     })),
     produksi,
+    skenario,
+    resep: p.resep ?? dataDummy.resep,
     skorMingguLalu: p.skor_minggu_lalu,
     rekonsiliasi: p.rekonsiliasi,
   };
@@ -169,6 +180,24 @@ const bulatPositif = (n, label) => {
 export const catatProduksi = async (produk, jumlah) => panggil("catat_produksi", { p_produk: produk, p_jumlah: bulatPositif(jumlah, "Jumlah produksi") });
 export const selesaikanProduksi = async (id) => panggil("selesaikan_produksi", { p_id: id });
 export const catatPenjualan = async (produk, jumlah) => panggil("catat_penjualan", { p_produk: produk, p_jumlah: bulatPositif(jumlah, "Jumlah terjual") });
+// Skenario simulasi (Pemilik).
+export async function simpanSkenario(nama, parameter, hasil) {
+  nama = String(nama ?? "").trim().slice(0, 80);
+  if (!nama) throw new Error("Beri nama skenario dulu.");
+  if (!pakaiSupabase) throw new Error("Fitur ini butuh koneksi Supabase.");
+  const { error } = await (await sb()).from("skenario").insert({ nama, parameter, hasil });
+  if (error) {
+    if (error.code === "42501") throw new Error("Hanya Pemilik yang boleh menyimpan skenario.");
+    throw new Error(error.code === "42P01" || error.code === "PGRST205" ? "Tabel skenario belum ada. Jalankan supabase/simulasi.sql di Supabase." : error.message);
+  }
+}
+export async function hapusSkenario(id) {
+  if (!pakaiSupabase) throw new Error("Fitur ini butuh koneksi Supabase.");
+  const { data, error } = await (await sb()).from("skenario").delete().eq("id", id).select("id");
+  if (error) throw new Error(error.message);
+  if (!data.length) throw new Error("Skenario tidak ditemukan, atau akun ini bukan Pemilik.");
+}
+
 export async function ubahStok(id, digital, minimum) {
   if (!Number.isFinite(digital) || digital < 0) throw new Error("Stok harus angka 0 atau lebih.");
   if (minimum != null && (!Number.isFinite(minimum) || minimum < 0)) throw new Error("Batas minimum harus angka 0 atau lebih.");

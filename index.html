@@ -45,6 +45,7 @@
       <a href="#persediaan">Persediaan</a>
       <a href="#penjualan">Penjualan</a>
       <a href="#kesesuaian">Cek Kesesuaian</a>
+      <a href="#simulasi" class="khusus-pemilik">Simulasi</a>
       <a href="#laporan">Laporan</a>
       <button type="button" class="nav-keluar" data-keluar>Keluar</button>
     </nav>
@@ -173,6 +174,30 @@
         <button type="submit">Simpan</button>
         <p class="fisik-pesan" id="fisik-pesan" aria-live="polite"></p>
       </form>
+    </section>
+
+    <!-- Halaman Simulasi (Pemilik, UC-09) -->
+    <section class="kartu kartu-sim-atur" aria-labelledby="h-sim-atur" data-tampil="simulasi">
+      <div class="kepala-kartu"><h2 id="h-sim-atur">Atur skenario</h2></div>
+      <p class="sub">Ubah angka di bawah; hasil di kartu sebelah langsung dihitung ulang.</p>
+      <form class="form-sim" id="form-sim">
+        <label class="lebar">Nama skenario <input name="nama" maxlength="80" placeholder="mis. Produksi naik saat akhir pekan"></label>
+        <label class="lebar">Lama simulasi (hari) <input name="hari" type="number" inputmode="numeric" min="1" max="60" step="1" value="7" required></label>
+        <div class="lebar sim-produk" id="sim-produk"></div>
+        <button type="submit">Simpan skenario</button>
+        <button type="button" class="sekunder" id="sim-reset">Kembalikan ke data hari ini</button>
+        <p class="fisik-pesan" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="kartu kartu-sim-hasil" aria-labelledby="h-sim-hasil" data-tampil="simulasi">
+      <div class="kepala-kartu"><h2 id="h-sim-hasil">Hasil proyeksi</h2></div>
+      <div id="sim-hasil" aria-live="polite"></div>
+    </section>
+
+    <section class="kartu kartu-sim-simpan" aria-labelledby="h-sim-simpan" data-tampil="simulasi">
+      <div class="kepala-kartu"><h2 id="h-sim-simpan">Skenario tersimpan</h2></div>
+      <ul class="daftar-skenario" id="daftar-skenario"></ul>
     </section>
 
     <!-- Baris 2 -->

@@ -20,7 +20,7 @@ Untuk memakai database sungguhan:
 
 1. Buat project gratis di supabase.com.
 2. Buka **SQL Editor**, jalankan berurutan: `supabase/schema.sql`, `supabase/seed.sql`, `supabase/peran.sql`,
-   `supabase/data-bulan.sql`, `supabase/input-operator.sql`.
+   `supabase/data-bulan.sql`, `supabase/input-operator.sql`, `supabase/simulasi.sql`.
 3. **Authentication → Users → Add user**: buat dua akun (centang *Auto Confirm User*), lalu beri peran
    lewat SQL di bagian bawah `supabase/peran.sql` (ganti emailnya). Matikan pendaftaran publik di
    **Authentication → Sign In / Providers → Email → Allow new users to sign up**.

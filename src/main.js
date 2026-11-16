@@ -4,8 +4,9 @@ import "@fontsource/inter/600.css";
 import "./style.css";
 import {
   subscribeRealtime, ambilData, simpanHitunganFisik, sesiSaya, masuk, masukContoh, keluar, pakaiSupabase, ZONA,
-  catatProduksi, selesaikanProduksi, catatPenjualan, ubahStok,
+  catatProduksi, selesaikanProduksi, catatPenjualan, ubahStok, simpanSkenario, hapusSkenario,
 } from "./data.js";
+import { hitungSimulasi } from "./simulasi.js";
 import { buatDenah } from "./scene.js";
 import { tanyaSistem, ringkasZona } from "./tanya.js";
 
@@ -24,6 +25,7 @@ const HALAMAN = {
   penjualan: "Penjualan",
   kesesuaian: "Cek Kesesuaian",
   laporan: "Laporan",
+  simulasi: "Simulasi",
 };
 const TAB = ["produksi", "persediaan", "penjualan"];
 
@@ -317,9 +319,101 @@ function render() {
   renderTabel();
   renderRingkas();
   renderInfo();
-  denah.setStatus(statusZona(state.tab));
+  // di halaman Simulasi, warna zona 3D mengikuti hasil proyeksi bahan (merah = bahan kurang)
+  const sim = state.halaman === "simulasi" ? renderSimulasi() : null;
+  denah.setStatus(sim ? statusSimulasi(sim) : statusZona(state.tab));
   $$("[data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
   $("#diperbarui").textContent = teksSumber();
+}
+
+// ---------- tahap 3: simulasi skenario (Pemilik) ----------
+function bacaRencana() {
+  const f = $("#form-sim");
+  const rencana = {};
+  for (const baris of $$("#sim-produk [data-produk]")) {
+    rencana[baris.dataset.produk] = {
+      produksi: baris.querySelector("[name=produksi]").valueAsNumber,
+      laku: baris.querySelector("[name=laku]").valueAsNumber,
+    };
+  }
+  return { hari: f.hari.valueAsNumber, rencana };
+}
+function isiRencana({ hari, rencana }) {
+  $("#form-sim").hari.value = hari;
+  for (const baris of $$("#sim-produk [data-produk]")) {
+    const r = rencana[baris.dataset.produk];
+    if (!r) continue;
+    baris.querySelector("[name=produksi]").value = r.produksi;
+    baris.querySelector("[name=laku]").value = r.laku;
+  }
+}
+function renderSimulasi() {
+  const d = state.data;
+  const wadah = $("#sim-produk");
+  // baris input dibuat sekali (nilai default = data hari ini); nilai yang sedang diubah tidak ditimpa
+  if (wadah.dataset.produk !== d.produk.map((p) => p.id).join()) {
+    wadah.dataset.produk = d.produk.map((p) => p.id).join();
+    wadah.innerHTML = `<div class="sim-kepala"><span>Produk</span><span>Produksi/hari</span><span>Laku (%)</span></div>` +
+      d.produk.map((p) => {
+        const laku = Math.round((p.terjual / Math.max(1, p.dibuat - p.rusak)) * 100);
+        return `<div class="sim-baris" data-produk="${esc(p.id)}">
+          <span>${esc(p.nama)}</span>
+          <input name="produksi" type="number" inputmode="numeric" min="0" step="1" value="${p.dibuat}" aria-label="Produksi ${esc(p.nama)} per hari">
+          <input name="laku" type="number" inputmode="decimal" min="0" max="100" step="1" value="${laku}" aria-label="Perkiraan laku ${esc(p.nama)} dalam persen">
+        </div>`;
+      }).join("");
+  }
+  renderDaftarSkenario();
+  let h;
+  try {
+    h = hitungSimulasi(d, bacaRencana());
+  } catch (err) {
+    $("#sim-hasil").innerHTML = `<p class="fisik-pesan gagal">${esc(err.message)}</p>`;
+    return null;
+  }
+  const kurang = h.bahan.filter((b) => b.kurang > 0);
+  const cukup = (b) => (b.cukupHari === Infinity ? "tidak dipakai" : `${b.cukupHari.toLocaleString("id-ID", { maximumFractionDigits: 1 })} hari`);
+  $("#sim-hasil").innerHTML = `
+    <div class="sim-kpi">
+      <div><small>Proyeksi omzet ${h.hari} hari</small><strong>${rp(h.omzetTotal)}</strong><small>${rp(h.omzetHari)} per hari</small></div>
+      <div><small>Terjual</small><strong>${angka(h.terjualTotal)}</strong><small>pcs</small></div>
+      <div><small>Sisa tidak laku</small><strong>${angka(h.sisaTotal)}</strong><small>pcs</small></div>
+    </div>
+    <p class="sim-ringkas ${kurang.length ? "beda" : "ok"}">${kurang.length
+      ? `Bahan tidak cukup untuk ${h.hari} hari: ${kurang.map((b) => `${esc(b.nama)} (kurang ${angka(Math.ceil(b.kurang * 10) / 10)} ${esc(b.satuan)})`).join(", ")}.`
+      : `Semua bahan cukup untuk ${h.hari} hari.`}</p>
+    <div class="tabel-gulir"><table>
+      <thead><tr><th>Bahan</th><th class="num">Butuh/hari</th><th class="num">Stok fisik</th><th class="num">Cukup untuk</th><th class="num">Perlu dibeli</th></tr></thead>
+      <tbody>${h.bahan.map((b) => `<tr class="${b.kurang > 0 ? "baris-kurang" : ""}">
+        <td>${esc(b.nama)}<small>${ZONA[b.zona]}</small></td>
+        <td class="num">${angka(Math.round(b.perHari * 100) / 100)} ${esc(b.satuan)}</td>
+        <td class="num">${angka(b.stok)} ${esc(b.satuan)}</td>
+        <td class="num">${cukup(b)}</td>
+        <td class="num">${b.kurang > 0 ? `${angka(Math.ceil(b.kurang * 10) / 10)} ${esc(b.satuan)}` : "—"}</td>
+      </tr>`).join("")}</tbody>
+    </table></div>
+    <div class="tabel-gulir"><table>
+      <thead><tr><th>Produk</th><th class="num">Produksi</th><th class="num">Terjual</th><th class="num">Sisa</th><th class="num">Omzet/hari</th></tr></thead>
+      <tbody>${h.perProduk.map((p) => `<tr><td>${esc(p.nama)}</td><td class="num">${angka(p.produksi)}</td><td class="num">${angka(p.terjual)}</td><td class="num">${angka(p.sisa)}</td><td class="num">${rp(p.omzet)}</td></tr>`).join("")}</tbody>
+    </table></div>`;
+  return h;
+}
+function statusSimulasi(h) {
+  const peta = {};
+  for (const b of h.bahan) {
+    if (b.perHari <= 0) continue;
+    peta[b.zona] = b.kurang > 0 || peta[b.zona] === "selisih" ? "selisih" : "sesuai";
+  }
+  return peta;
+}
+function renderDaftarSkenario() {
+  const daftar = state.data.skenario ?? [];
+  $("#daftar-skenario").innerHTML = daftar.length
+    ? daftar.map((s) => `<li>
+        <span>${esc(s.nama)}<small>${s.parameter.hari} hari · ${rp(s.hasil.omzetTotal)} · ${new Date(s.dibuat_pada).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}</small></span>
+        <span class="aksi-skenario"><button type="button" data-muat="${s.id}">Muat</button><button type="button" data-hapus="${s.id}" aria-label="Hapus skenario ${esc(s.nama)}">Hapus</button></span>
+      </li>`).join("")
+    : `<li class="kosong">Belum ada skenario tersimpan.</li>`;
 }
 
 // ---------- interaksi dua arah ----------
@@ -338,7 +432,8 @@ function gantiTab(tab) {
 
 function bukaHalaman() {
   const h = location.hash.slice(1);
-  state.halaman = HALAMAN[h] ? h : "beranda";
+  // halaman Simulasi khusus Pemilik (UC-09)
+  state.halaman = HALAMAN[h] && !(h === "simulasi" && state.sesi?.peran !== "pemilik") ? h : "beranda";
   if (TAB.includes(state.halaman)) state.tab = state.halaman;
   else if (state.halaman === "kesesuaian") state.tab = null;
   else if (!state.tab) state.tab = "persediaan";
@@ -482,6 +577,43 @@ $("#daftar-produksi").addEventListener("click", async (e) => {
     toast("Produksi selesai, stok etalase bertambah.");
   } catch (err) {
     b.disabled = false;
+    toast("Gagal: " + err.message);
+  }
+});
+
+// Simulasi: hitung ulang setiap kali angka diubah; simpan/muat/hapus skenario.
+$("#form-sim").addEventListener("input", (e) => { if (e.target.name !== "nama") render(); });
+pasangForm("#form-sim", async (f) => {
+  const parameter = bacaRencana();
+  const h = hitungSimulasi(state.data, parameter);
+  const hasil = {
+    omzetTotal: h.omzetTotal, terjualTotal: h.terjualTotal, sisaTotal: h.sisaTotal,
+    bahanKurang: h.bahan.filter((b) => b.kurang > 0).map((b) => ({ nama: b.nama, kurang: b.kurang, satuan: b.satuan })),
+  };
+  await simpanSkenario(f.nama.value, parameter, hasil);
+  f.nama.value = "";
+  return "Skenario tersimpan.";
+});
+$("#sim-reset").addEventListener("click", () => { $("#sim-produk").dataset.produk = ""; $("#form-sim").hari.value = 7; render(); });
+$("#daftar-skenario").addEventListener("click", async (e) => {
+  const muat = e.target.closest("[data-muat]");
+  const hapus = e.target.closest("[data-hapus]");
+  const s = (state.data.skenario ?? []).find((x) => String(x.id) === (muat ?? hapus)?.dataset[muat ? "muat" : "hapus"]);
+  if (!s) return;
+  if (muat) {
+    isiRencana(s.parameter);
+    $("#form-sim").nama.value = s.nama;
+    render();
+    toast(`Skenario "${s.nama}" dimuat.`);
+    return;
+  }
+  if (!confirm(`Hapus skenario "${s.nama}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+  try {
+    await hapusSkenario(s.id);
+    state.data = await ambilData();
+    render();
+    toast("Skenario dihapus.");
+  } catch (err) {
     toast("Gagal: " + err.message);
   }
 });
