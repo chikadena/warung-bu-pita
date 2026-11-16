@@ -4,13 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Warung Bu Pita</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23f5a524'/><text x='16' y='22' font-size='16' text-anchor='middle' font-family='sans-serif' font-weight='700' fill='%23111'>P</text></svg>">
+<link rel="icon" type="image/png" href="./src/assets/logo-wbp.png">
 </head>
 <body>
-<div class="aplikasi">
+<main class="layar-masuk" id="layar-masuk" hidden>
+  <div class="kartu-masuk">
+    <div class="masuk-hero">
+      <img src="./src/assets/logo-wbp.png" alt="Logo Warung Bu Pita" width="1512" height="1040">
+    </div>
+    <div class="masuk-isi">
+      <p class="masuk-label">Masuk</p>
+      <h1>Selamat datang kembali!</h1>
+      <p class="sub">Web Monitoring UMKM Warung Bu Pita</p>
+      <form id="form-masuk">
+        <label>Email <input id="masuk-email" type="email" autocomplete="username" placeholder="nama@email.com" required></label>
+        <label>Kata sandi <input id="masuk-sandi" type="password" autocomplete="current-password" placeholder="••••••••" required></label>
+        <button type="submit">Masuk</button>
+      </form>
+      <div class="masuk-contoh" id="masuk-contoh" hidden>
+        <p class="sub">Mode data contoh (Supabase belum diatur). Pilih peran:</p>
+        <button type="button" data-peran="operator">Masuk sebagai Operator</button>
+        <button type="button" data-peran="pemilik">Masuk sebagai Pemilik</button>
+      </div>
+      <p class="pesan-masuk" id="pesan-masuk" role="alert"></p>
+    </div>
+  </div>
+</main>
+<div class="aplikasi" hidden>
   <header class="topbar">
     <a class="logo" href="#beranda" aria-label="Warung Bu Pita, ke Beranda">
-      <span class="logo-ikon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v9h16v-9M3 6l2-3h14l2 3v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM10 19v-5h4v5"/></svg></span>
+      <span class="logo-ikon" aria-hidden="true"></span>
       <span>Warung <b>Bu Pita</b></span>
     </a>
     <button class="bulat hamburger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="menu">
@@ -23,6 +46,7 @@
       <a href="#penjualan">Penjualan</a>
       <a href="#kesesuaian">Cek Kesesuaian</a>
       <a href="#laporan">Laporan</a>
+      <button type="button" class="nav-keluar" data-keluar>Keluar</button>
     </nav>
     <div class="aksi-atas">
       <button class="bulat" type="button" id="tombol-cari" aria-label="Tanya sistem">
@@ -33,6 +57,10 @@
         <span class="titik-notif" hidden></span>
       </a>
       <span class="status-buka" id="status-buka"><i></i><span></span></span>
+      <button type="button" class="pil-peran" id="pil-peran" data-keluar>
+        <span id="nama-peran"></span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg>
+      </button>
     </div>
   </header>
 
@@ -44,17 +72,17 @@
       </button>
     </div>
     <div class="kontrol">
-      <span class="pil-tanggal" id="tgl-kini"></span>
-      <span class="teks-dibanding">dibanding</span>
-      <span class="pil-tanggal" id="tgl-lalu"></span>
+      <span class="pil-tanggal">
+        <span><b id="tgl-label"></b> <span id="tgl-kini"></span></span>
+      </span>
       <label class="pil-pilih">
         <span class="sr-only">Periode</span>
         <select id="periode">
           <option value="harian">Harian</option>
           <option value="mingguan">Mingguan</option>
+          <option value="bulanan">Bulanan</option>
         </select>
       </label>
-      <button class="pil-tombol" type="button" id="tambah-widget">Tambah widget <span aria-hidden="true">+</span></button>
     </div>
   </div>
 
@@ -95,7 +123,6 @@
       </div>
       <div class="angka-baris">
         <strong class="angka-besar" id="omzet"></strong>
-        <span class="lencana" id="omzet-naik"></span>
       </div>
       <ul class="daftar-produk" id="omzet-produk"></ul>
     </section>
@@ -108,7 +135,7 @@
       </div>
       <p class="sub" id="sub-detail"></p>
       <div class="tabel-gulir"><table id="tabel-detail"></table></div>
-      <form class="form-fisik" id="form-fisik" hidden>
+      <form class="form-fisik khusus-operator" id="form-fisik" hidden>
         <h3>Catat hitungan fisik</h3>
         <label class="lebar">Item
           <select id="fisik-item" required></select>

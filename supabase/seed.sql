@@ -1,4 +1,4 @@
--- Data awal Warung Bu Pita (Minggu, 15 Nov 2026). Jalankan SETELAH schema.sql.
+-- Data awal Warung Bu Pita (1–15 Nov 2026). Jalankan SETELAH schema.sql.
 
 insert into produk (id, nama, harga, dibuat, rusak, terjual, warna, urutan) values
   ('bakso', 'Bakso goreng', 3000, 80, 3, 70, '#22a447', 0),
@@ -23,6 +23,14 @@ insert into cek_kesesuaian (id, tab, zona, nama, satuan, digital, fisik, catatan
 on conflict (id) do nothing;
 
 insert into penjualan_harian (tanggal, hari, omzet, transaksi, pembeli, produk) values
+  ('2026-11-01', 'Min', 398000, 102, 91, '{"bakso":201000,"pisang":125000,"risol":72000}'::jsonb),
+  ('2026-11-02', 'Sen', 352000, 90, 81, '{"bakso":177000,"pisang":108000,"risol":67000}'::jsonb),
+  ('2026-11-03', 'Sel', 336000, 86, 78, '{"bakso":168000,"pisang":103000,"risol":65000}'::jsonb),
+  ('2026-11-04', 'Rab', 371000, 95, 86, '{"bakso":186000,"pisang":115000,"risol":70000}'::jsonb),
+  ('2026-11-05', 'Kam', 359000, 92, 83, '{"bakso":180000,"pisang":111000,"risol":68000}'::jsonb),
+  ('2026-11-06', 'Jum', 432000, 110, 99, '{"bakso":216000,"pisang":135000,"risol":81000}'::jsonb),
+  ('2026-11-07', 'Sab', 498000, 126, 113, '{"bakso":249000,"pisang":156000,"risol":93000}'::jsonb),
+  ('2026-11-08', 'Min', 405000, 104, 93, '{"bakso":204000,"pisang":127000,"risol":74000}'::jsonb),
   ('2026-11-09', 'Sen', 385000, 98, 88, '{"bakso":192000,"pisang":121000,"risol":72000}'::jsonb),
   ('2026-11-10', 'Sel', 342000, 87, 79, '{"bakso":171000,"pisang":105000,"risol":66000}'::jsonb),
   ('2026-11-11', 'Rab', 410000, 104, 93, '{"bakso":207000,"pisang":128000,"risol":75000}'::jsonb),
@@ -49,7 +57,6 @@ insert into penjualan_jam (jam, omzet) values
 on conflict (jam) do nothing;
 
 insert into pengaturan (kunci, nilai) values
-  ('lalu', '{"harian":{"omzet":358000,"transaksi":98,"pembeli":87,"produk":{"bakso":180000,"pisang":112500,"risol":65500}},"mingguan":{"omzet":2580000,"transaksi":640,"pembeli":571,"produk":{"bakso":1290000,"pisang":815000,"risol":475000}}}'::jsonb),
   ('skor_minggu_lalu', '88'::jsonb),
   ('rekonsiliasi', '{"ditemukan":12,"selesai":11}'::jsonb)
 on conflict (kunci) do nothing;

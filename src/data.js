@@ -13,26 +13,28 @@ export const ZONA = {
 
 // Data dummy hari Minggu, 15 Nov 2026.
 const dataDummy = {
-  tanggal: "2026-11-15",
   produk: [
     { id: "bakso", nama: "Bakso goreng", harga: 3000, dibuat: 80, rusak: 3, terjual: 70, warna: "#22a447" },
     { id: "pisang", nama: "Pisang coklat", harga: 2500, dibuat: 60, rusak: 2, terjual: 52, warna: "#2f5bff" },
     { id: "risol", nama: "Risol", harga: 2000, dibuat: 45, rusak: 2, terjual: 36, warna: "#e0488e" },
   ],
-  // Pembanding: hari yang sama minggu lalu (harian) dan total minggu lalu (mingguan).
-  lalu: {
-    harian: { omzet: 358000, transaksi: 98, pembeli: 87, produk: { bakso: 180000, pisang: 112500, risol: 65500 } },
-    mingguan: { omzet: 2580000, transaksi: 640, pembeli: 571, produk: { bakso: 1290000, pisang: 815000, risol: 475000 } },
-  },
-  // Senin 9 Nov s.d. Minggu 15 Nov.
-  minggu: [
-    { hari: "Sen", omzet: 385000, transaksi: 98, pembeli: 88, produk: { bakso: 192000, pisang: 121000, risol: 72000 } },
-    { hari: "Sel", omzet: 342000, transaksi: 87, pembeli: 79, produk: { bakso: 171000, pisang: 105000, risol: 66000 } },
-    { hari: "Rab", omzet: 410000, transaksi: 104, pembeli: 93, produk: { bakso: 207000, pisang: 128000, risol: 75000 } },
-    { hari: "Kam", omzet: 368000, transaksi: 94, pembeli: 85, produk: { bakso: 186000, pisang: 112000, risol: 70000 } },
-    { hari: "Jum", omzet: 455000, transaksi: 115, pembeli: 103, produk: { bakso: 228000, pisang: 142000, risol: 85000 } },
-    { hari: "Sab", omzet: 520000, transaksi: 131, pembeli: 118, produk: { bakso: 261000, pisang: 163000, risol: 96000 } },
-    { hari: "Min", omzet: 412000, transaksi: 106, pembeli: 94, produk: { bakso: 210000, pisang: 130000, risol: 72000 } },
+  // Penjualan harian 1–15 Nov 2026. "minggu" (7 hari terakhir) & "bulan" diturunkan di ambilData().
+  harian: [
+    { tanggal: "2026-11-01", hari: "Min", omzet: 398000, transaksi: 102, pembeli: 91, produk: { bakso: 201000, pisang: 125000, risol: 72000 } },
+    { tanggal: "2026-11-02", hari: "Sen", omzet: 352000, transaksi: 90, pembeli: 81, produk: { bakso: 177000, pisang: 108000, risol: 67000 } },
+    { tanggal: "2026-11-03", hari: "Sel", omzet: 336000, transaksi: 86, pembeli: 78, produk: { bakso: 168000, pisang: 103000, risol: 65000 } },
+    { tanggal: "2026-11-04", hari: "Rab", omzet: 371000, transaksi: 95, pembeli: 86, produk: { bakso: 186000, pisang: 115000, risol: 70000 } },
+    { tanggal: "2026-11-05", hari: "Kam", omzet: 359000, transaksi: 92, pembeli: 83, produk: { bakso: 180000, pisang: 111000, risol: 68000 } },
+    { tanggal: "2026-11-06", hari: "Jum", omzet: 432000, transaksi: 110, pembeli: 99, produk: { bakso: 216000, pisang: 135000, risol: 81000 } },
+    { tanggal: "2026-11-07", hari: "Sab", omzet: 498000, transaksi: 126, pembeli: 113, produk: { bakso: 249000, pisang: 156000, risol: 93000 } },
+    { tanggal: "2026-11-08", hari: "Min", omzet: 405000, transaksi: 104, pembeli: 93, produk: { bakso: 204000, pisang: 127000, risol: 74000 } },
+    { tanggal: "2026-11-09", hari: "Sen", omzet: 385000, transaksi: 98, pembeli: 88, produk: { bakso: 192000, pisang: 121000, risol: 72000 } },
+    { tanggal: "2026-11-10", hari: "Sel", omzet: 342000, transaksi: 87, pembeli: 79, produk: { bakso: 171000, pisang: 105000, risol: 66000 } },
+    { tanggal: "2026-11-11", hari: "Rab", omzet: 410000, transaksi: 104, pembeli: 93, produk: { bakso: 207000, pisang: 128000, risol: 75000 } },
+    { tanggal: "2026-11-12", hari: "Kam", omzet: 368000, transaksi: 94, pembeli: 85, produk: { bakso: 186000, pisang: 112000, risol: 70000 } },
+    { tanggal: "2026-11-13", hari: "Jum", omzet: 455000, transaksi: 115, pembeli: 103, produk: { bakso: 228000, pisang: 142000, risol: 85000 } },
+    { tanggal: "2026-11-14", hari: "Sab", omzet: 520000, transaksi: 131, pembeli: 118, produk: { bakso: 261000, pisang: 163000, risol: 96000 } },
+    { tanggal: "2026-11-15", hari: "Min", omzet: 412000, transaksi: 106, pembeli: 94, produk: { bakso: 210000, pisang: 130000, risol: 72000 } },
   ],
   // Omzet per jam hari ini (jam buka 06.00-19.00).
   perJam: [
@@ -86,17 +88,14 @@ async function ambilDariSupabase() {
   const [produk, cek, hari, jam, atur] = await Promise.all([
     tanya(db.from("produk").select("*").order("urutan")),
     tanya(db.from("cek_kesesuaian").select("*").order("urutan")),
-    tanya(db.from("penjualan_harian").select("*").order("tanggal", { ascending: false }).limit(7)),
+    tanya(db.from("penjualan_harian").select("*").order("tanggal", { ascending: false }).limit(31)),
     tanya(db.from("penjualan_jam").select("*").order("jam")),
     tanya(db.from("pengaturan").select("*")),
   ]);
   const p = Object.fromEntries(atur.map((r) => [r.kunci, r.nilai]));
-  const minggu = hari.reverse();
   return {
-    tanggal: minggu.at(-1)?.tanggal,
     produk: produk.map(({ urutan, ...r }) => r),
-    lalu: p.lalu,
-    minggu: minggu.map((r) => ({ hari: r.hari, omzet: r.omzet, transaksi: r.transaksi, pembeli: r.pembeli, produk: r.produk })),
+    harian: hari.reverse().map((r) => ({ tanggal: r.tanggal, hari: r.hari, omzet: r.omzet, transaksi: r.transaksi, pembeli: r.pembeli, produk: r.produk })),
     perJam: jam.map((r) => ({ jam: r.jam, omzet: r.omzet })),
     cek: cek.map((r) => ({
       id: r.id, tab: r.tab, zona: r.zona, nama: r.nama, satuan: r.satuan,
@@ -120,6 +119,11 @@ export async function ambilData() {
     }
   }
   data ??= structuredClone(dataDummy);
+  // Hari terakhir yang tercatat = "hari ini"; minggu = 7 hari terakhir; bulan = bulan dari hari terakhir.
+  const akhir = data.harian.at(-1)?.tanggal ?? "";
+  data.tanggal = akhir;
+  data.minggu = data.harian.slice(-7);
+  data.bulan = data.harian.filter((h) => h.tanggal.slice(0, 7) === akhir.slice(0, 7));
   data.sumber = sumber;
   data.diperbarui = new Date().toISOString();
   return data;
@@ -133,13 +137,50 @@ export async function simpanHitunganFisik(id, fisik, catatan) {
     const db = await sb();
     const { data, error } = await db.from("cek_kesesuaian").update({ ...isi, diperbarui: new Date().toISOString() }).eq("id", id).select("id");
     if (error) throw error;
-    if (!data.length) throw new Error("Item tidak ditemukan atau izin ubah belum dibuka (cek policy di Supabase).");
+    if (!data.length) throw new Error("Item tidak ditemukan, atau akun ini bukan Operator.");
     return;
   }
   const item = dataDummy.cek.find((c) => c.id === id);
   if (!item) throw new Error("Item tidak ditemukan.");
   item.fisik = isi.fisik;
   if (isi.catatan) item.catatan = isi.catatan; else delete item.catatan;
+}
+
+// ---------- Login & peran ----------
+// Tanpa Supabase (mode contoh) peran dipilih langsung di layar masuk, tanpa kata sandi.
+let sesiContoh = null;
+
+// Mengembalikan { email, nama, peran } atau null bila belum login.
+export async function sesiSaya() {
+  if (!pakaiSupabase) return sesiContoh;
+  const db = await sb();
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) return null;
+  const { data, error } = await db.from("profil").select("nama, peran").eq("id", session.user.id).maybeSingle();
+  if (error) throw error;
+  if (!data) {
+    await db.auth.signOut();
+    throw new Error("Akun ini belum diberi peran Operator atau Pemilik.");
+  }
+  return { email: session.user.email, ...data };
+}
+
+export async function masuk(email, sandi) {
+  const db = await sb();
+  const { error } = await db.auth.signInWithPassword({ email: email.trim(), password: sandi });
+  if (error) throw new Error(error.message === "Invalid login credentials" ? "Email atau kata sandi salah." : error.message);
+  return sesiSaya();
+}
+
+export function masukContoh(peran) {
+  if (!["operator", "pemilik"].includes(peran)) throw new Error("Peran tidak dikenal.");
+  sesiContoh = { email: null, nama: peran === "pemilik" ? "Bu Pita" : "Operator Warung", peran };
+  return sesiContoh;
+}
+
+export async function keluar() {
+  sesiContoh = null;
+  if (pakaiSupabase) await (await sb()).auth.signOut();
 }
 
 // Memanggil callback(data) sekarang, lalu tiap ada perubahan (Supabase Realtime) atau tiap interval polling.

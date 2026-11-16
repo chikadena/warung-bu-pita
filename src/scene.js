@@ -580,6 +580,8 @@ export function buatDenah(wadah, { onPilih }) {
     const tertutup = panel && getComputedStyle(panel).position === "absolute";
     camera.setViewOffset(w, h, 0, tertutup ? Math.round(h * 0.13) : 0, w, h);
     camera.updateProjectionMatrix();
+    // kanvas bisa baru tampil setelah login / layar diputar: hitung ulang posisi awal sesuai ukuran baru
+    if (!terpilih) pilih(null);
   };
   new ResizeObserver(ukur).observe(wadah);
   ukur();

@@ -2,7 +2,7 @@ import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "./style.css";
-import { subscribeRealtime, ambilData, simpanHitunganFisik, ZONA } from "./data.js";
+import { subscribeRealtime, ambilData, simpanHitunganFisik, sesiSaya, masuk, masukContoh, keluar, pakaiSupabase, ZONA } from "./data.js";
 import { buatDenah } from "./scene.js";
 import { tanyaSistem, ringkasZona } from "./tanya.js";
 
@@ -12,7 +12,6 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const rp = (n) => "Rp " + Math.round(n).toLocaleString("id-ID");
 const rpRingkas = (n) => (n >= 1e6 ? (n / 1e6).toLocaleString("id-ID", { maximumFractionDigits: 1 }) + "jt" : Math.round(n / 1000) + "rb");
 const angka = (n) => n.toLocaleString("id-ID");
-const persen = (a, b) => Math.round(((a - b) / b) * 100);
 const tanda = (n) => (n > 0 ? "+" : n < 0 ? "−" : "") + angka(Math.abs(n));
 
 const HALAMAN = {
@@ -40,28 +39,33 @@ function statusZona(tab) {
   }
   return peta;
 }
+const PERIODE = {
+  harian: { judul: "Hari Ini", label: "Hari ini:", hari: (d) => d.harian.slice(-1) },
+  mingguan: { judul: "7 Hari Terakhir", label: "7 hari terakhir:", hari: (d) => d.minggu },
+  bulanan: { judul: "Bulan Ini", label: "Bulan ini:", hari: (d) => d.bulan },
+};
+// Total omzet/transaksi/pembeli/produk untuk periode terpilih.
 function periode() {
   const d = state.data;
-  if (state.periode === "harian") {
-    const hari = d.minggu.at(-1);
-    return { ...hari, lalu: d.lalu.harian };
-  }
-  const jumlah = (k) => d.minggu.reduce((n, h) => n + h[k], 0);
+  const hari = PERIODE[state.periode].hari(d);
+  const jumlah = (k) => hari.reduce((n, h) => n + h[k], 0);
   const produk = {};
-  for (const p of d.produk) produk[p.id] = d.minggu.reduce((n, h) => n + h.produk[p.id], 0);
-  return { omzet: jumlah("omzet"), transaksi: jumlah("transaksi"), pembeli: jumlah("pembeli"), produk, lalu: d.lalu.mingguan };
+  for (const p of d.produk) produk[p.id] = hari.reduce((n, h) => n + (h.produk[p.id] ?? 0), 0);
+  return { omzet: jumlah("omzet"), transaksi: jumlah("transaksi"), pembeli: jumlah("pembeli"), produk, hari };
+}
+const tgl = (s, opsi = { day: "numeric", month: "short", year: "numeric" }) => new Date(s + "T00:00:00").toLocaleDateString("id-ID", opsi);
+function rentang(hari) {
+  const [a, b] = [hari[0]?.tanggal, hari.at(-1)?.tanggal];
+  if (!a) return "";
+  if (a === b) return tgl(a, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  return a.slice(0, 7) === b.slice(0, 7) ? `${Number(a.slice(8))} – ${tgl(b)}` : `${tgl(a)} – ${tgl(b)}`;
 }
 
 // ---------- kartu ----------
 function renderOmzet() {
   const p = periode();
-  $("#h-omzet").textContent = state.periode === "harian" ? "Omzet Hari Ini" : "Omzet Minggu Ini";
+  $("#h-omzet").textContent = "Omzet " + PERIODE[state.periode].judul;
   $("#omzet").textContent = rp(p.omzet);
-  const naik = persen(p.omzet, p.lalu.omzet);
-  const el = $("#omzet-naik");
-  el.textContent = `${naik >= 0 ? "▲" : "▼"} ${Math.abs(naik)}%`;
-  el.className = "lencana " + (naik >= 0 ? "naik" : "turun");
-  el.title = `dibanding ${rp(p.lalu.omzet)}`;
   $("#omzet-produk").innerHTML = [...state.data.produk]
     .sort((a, b) => p.produk[b.id] - p.produk[a.id])
     .map((pr) => `<li>
@@ -104,9 +108,8 @@ function renderDot(idEl, kunci, kelas) {
     return `<span class="dot-kol" title="${NAMA[h.hari]}: ${angka(h[kunci])}">${i === iPuncak ? `<b class="gelembung">Puncak: ${NAMA[h.hari]}</b>` : ""}${titik}</span>`;
   }).join("");
   $(idEl).innerHTML = `
-    <strong class="angka-besar">${angka(p[kunci])}</strong>
-    <span class="dot-matrix ${kelas}" role="img" aria-label="${kunci} 7 hari terakhir, puncak hari ${NAMA[d[iPuncak].hari]}">${kolom}</span>
-    <span class="banding"><small>vs periode lalu</small><b>${tanda(p[kunci] - p.lalu[kunci])}</b></span>`;
+    <span class="dot-angka"><strong class="angka-besar">${angka(p[kunci])}</strong><small>${PERIODE[state.periode].judul.toLowerCase()}</small></span>
+    <span class="dot-matrix ${kelas}" role="img" aria-label="${kunci} 7 hari terakhir, puncak hari ${NAMA[d[iPuncak].hari]}">${kolom}</span>`;
 }
 
 function renderInsight() {
@@ -183,7 +186,7 @@ function renderTabel() {
   $("#form-fisik").hidden = h === "laporan";
   if (h === "laporan") {
     $("#h-detail").textContent = "Rekap 7 Hari";
-    $("#sub-detail").textContent = `Total omzet ${rp(state.data.minggu.reduce((n, d) => n + d.omzet, 0))}, 9–15 Nov 2026`;
+    $("#sub-detail").textContent = `Total omzet ${rp(state.data.minggu.reduce((n, d) => n + d.omzet, 0))}, ${rentang(state.data.minggu)}`;
     $("#tabel-detail").innerHTML = `<thead><tr><th>Hari</th><th class="num">Omzet</th><th class="num">Transaksi</th><th class="num">Pembeli</th></tr></thead><tbody>` +
       state.data.minggu.map((d) => `<tr><td>${d.hari}</td><td class="num">${rp(d.omzet)}</td><td class="num">${d.transaksi}</td><td class="num">${d.pembeli}</td></tr>`).join("") + "</tbody>";
     return;
@@ -245,9 +248,8 @@ function renderInfo() {
 }
 
 function renderTanggal() {
-  const harian = state.periode === "harian";
-  $("#tgl-kini").textContent = harian ? "Min, 15 Nov 2026" : "9 – 15 Nov 2026";
-  $("#tgl-lalu").textContent = harian ? "Min, 8 Nov 2026" : "2 – 8 Nov 2026";
+  $("#tgl-label").textContent = PERIODE[state.periode].label;
+  $("#tgl-kini").textContent = rentang(PERIODE[state.periode].hari(state.data));
 }
 
 function render() {
@@ -339,7 +341,6 @@ $("#salin-tautan").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(location.href); toast("Tautan disalin"); }
   catch { toast("Tidak bisa menyalin tautan di browser ini"); }
 });
-$("#tambah-widget").addEventListener("click", () => toast("Tambah widget belum tersedia di versi ini"));
 $("#tombol-cari").addEventListener("click", () => {
   if (state.halaman !== "beranda" && !TAB.includes(state.halaman)) location.hash = "beranda";
   $("#input-tanya").scrollIntoView({ block: "center", behavior: "smooth" });
@@ -397,13 +398,54 @@ $("#form-fisik").addEventListener("submit", async (e) => {
 });
 
 window.addEventListener("hashchange", bukaHalaman);
-// Render ulang hanya bila isi data berubah, supaya fokus keyboard & hover tidak hilang tiap polling.
-let jejakData = "";
-subscribeRealtime((data) => {
-  const { diperbarui, ...isi } = data;
-  const jejak = JSON.stringify(isi);
-  state.data = data;
-  if (jejak !== jejakData) { jejakData = jejak; render(); }
-  else { renderStatusBuka(); $("#diperbarui").textContent = teksSumber(); }
+
+// ---------- login & peran ----------
+const NAMA_PERAN = { operator: "Operator", pemilik: "Pemilik" };
+
+function mulai(sesi) {
+  state.sesi = sesi;
+  document.body.dataset.peran = sesi.peran;
+  $("#nama-peran").textContent = `${NAMA_PERAN[sesi.peran]} · ${sesi.nama}`;
+  $("#pil-peran").setAttribute("aria-label", `Keluar dari akun ${NAMA_PERAN[sesi.peran]}`);
+  $("#layar-masuk").hidden = true;
+  $(".aplikasi").hidden = false;
+  // Render ulang hanya bila isi data berubah, supaya fokus keyboard & hover tidak hilang tiap polling.
+  let jejakData = "";
+  subscribeRealtime((data) => {
+    const { diperbarui, ...isi } = data;
+    const jejak = JSON.stringify(isi);
+    state.data = data;
+    if (jejak !== jejakData) { jejakData = jejak; render(); }
+    else { renderStatusBuka(); $("#diperbarui").textContent = teksSumber(); }
+  });
+  bukaHalaman();
+}
+
+function tampilMasuk(pesan = "") {
+  $(".aplikasi").hidden = true;
+  $("#layar-masuk").hidden = false;
+  $("#form-masuk").hidden = !pakaiSupabase;
+  $("#masuk-contoh").hidden = pakaiSupabase;
+  $("#pesan-masuk").textContent = pesan;
+}
+
+$("#form-masuk").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const tombol = e.target.querySelector("button");
+  tombol.disabled = true;
+  $("#pesan-masuk").textContent = "";
+  try {
+    mulai(await masuk($("#masuk-email").value, $("#masuk-sandi").value));
+  } catch (err) {
+    $("#pesan-masuk").textContent = err.message;
+  } finally {
+    tombol.disabled = false;
+  }
 });
-bukaHalaman();
+$$("#masuk-contoh [data-peran]").forEach((b) => b.addEventListener("click", () => mulai(masukContoh(b.dataset.peran))));
+$$("[data-keluar]").forEach((b) => b.addEventListener("click", async () => {
+  await keluar();
+  location.reload(); // muat ulang agar data & langganan realtime milik sesi lama ikut bersih
+}));
+
+sesiSaya().then((sesi) => (sesi ? mulai(sesi) : tampilMasuk())).catch((err) => tampilMasuk(err.message));

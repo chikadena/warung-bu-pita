@@ -19,7 +19,10 @@ Tanpa konfigurasi, web memakai **data contoh** (lihat tulisan "Sumber data" di b
 Untuk memakai database sungguhan:
 
 1. Buat project gratis di supabase.com.
-2. Buka **SQL Editor**, jalankan isi `supabase/schema.sql`, lalu `supabase/seed.sql`.
+2. Buka **SQL Editor**, jalankan berurutan: `supabase/schema.sql`, `supabase/seed.sql`, `supabase/peran.sql`.
+3. **Authentication → Users → Add user**: buat dua akun (centang *Auto Confirm User*), lalu beri peran
+   lewat SQL di bagian bawah `supabase/peran.sql` (ganti emailnya). Matikan pendaftaran publik di
+   **Authentication → Sign In / Providers → Email → Allow new users to sign up**.
 3. Salin `.env.example` menjadi `.env`, isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY`
    (Project Settings → API). Jangan pernah memakai `service_role` key.
 4. Jalankan ulang `npm run dev`. Tulisan di bawah halaman berubah menjadi "Sumber data: Supabase".
