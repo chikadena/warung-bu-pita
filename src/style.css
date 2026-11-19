@@ -297,7 +297,6 @@ tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--biru); }
 .status.beda { color: var(--merah); }
 .status.beda::before { background: var(--merah); }
 
-.catatan-kaki { margin-top: 12px; font-size: 11px; color: var(--abu); text-align: right; }
 .toast {
   position: fixed; z-index: 50; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px; border-radius: 999px;
   background: #111; color: #fff; font-size: 13px; box-shadow: var(--bayang-lembut);

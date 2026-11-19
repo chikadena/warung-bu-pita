@@ -15,7 +15,7 @@ Tes: `npm test` · Build produksi: `npm run build` (hasil di folder `dist`).
 
 ## Database (Supabase)
 
-Tanpa konfigurasi, web memakai **data contoh** (lihat tulisan "Sumber data" di bawah halaman).
+Tanpa konfigurasi, web memakai **data contoh** (data disimpan hanya di browser).
 Untuk memakai database sungguhan:
 
 1. Buat project gratis di supabase.com.
@@ -26,7 +26,7 @@ Untuk memakai database sungguhan:
    **Authentication → Sign In / Providers → Email → Allow new users to sign up**.
 3. Salin `.env.example` menjadi `.env`, isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY`
    (Project Settings → API). Jangan pernah memakai `service_role` key.
-4. Jalankan ulang `npm run dev`. Tulisan di bawah halaman berubah menjadi "Sumber data: Supabase".
+4. Jalankan ulang `npm run dev`. Data kini dibaca dan disimpan di Supabase.
 
 Tabel: `produk`, `cek_kesesuaian`, `penjualan_harian`, `penjualan_jam`, `pengaturan`.
 Pengunjung boleh membaca semua tabel, tetapi hanya boleh mengubah kolom `fisik` dan `catatan`

@@ -325,7 +325,6 @@ function render() {
   const sim = state.halaman === "simulasi" ? renderSimulasi() : null;
   denah.setStatus(sim ? statusSimulasi(sim) : statusZona(state.tab));
   $$("[data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
-  $("#diperbarui").textContent = teksSumber();
 }
 
 // ---------- tahap 3: simulasi skenario (Pemilik) ----------
@@ -524,11 +523,6 @@ $("#form-tanya").addEventListener("submit", async (e) => {
   }
 });
 
-function teksSumber() {
-  const label = { supabase: "Sumber data: Supabase", contoh: "Sumber data: contoh (Supabase belum diatur)", "contoh-gagal": "Sumber data: contoh (gagal terhubung ke Supabase)" };
-  return `${label[state.data.sumber] ?? ""} · diperbarui ${new Date(state.data.diperbarui).toLocaleTimeString("id-ID")}`;
-}
-
 $("#fisik-item").addEventListener("change", isiFormFisik);
 
 // Kirim form Operator: tombol dikunci selama proses, pesan hasil di bawah form, data dimuat ulang setelah berhasil.
@@ -672,7 +666,6 @@ function mulai(sesi) {
     const jejak = JSON.stringify(isi);
     state.data = data;
     if (jejak !== jejakData) { jejakData = jejak; render(); }
-    else $("#diperbarui").textContent = teksSumber();
   });
   bukaHalaman();
 }
