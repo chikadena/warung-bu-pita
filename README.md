@@ -45,7 +45,11 @@ Setiap push ke branch `main` otomatis di-build dan di-deploy oleh `.github/workf
 ## Struktur
 
 - `src/data.js` — satu-satunya pintu data (Supabase atau data contoh)
-- `src/scene.js` — denah 3D teras warung
+- `src/scene.js` — memuat model 3D teras warung (Three.js) dan menambahkan klik, label, serta warna status zona
+- `blender/denah_warung.blend` — file model 3D (Blender). Nama objek zona (`zona_gudang_stok`, `zona_persiapan`,
+  `zona_penggorengan`, `zona_etalase`, `zona_uang`) harus sama dengan id zona di `src/data.js`
+- `src/assets/denah-warung.glb` — hasil ekspor model (File → Export → glTF 2.0) yang dimuat web. Setelah mengubah
+  model di Blender, ekspor ulang ke file ini
 - `src/main.js`, `src/style.css` — tampilan & interaksi
 - `src/tanya.js` — "Tanya sistem" (rule-based, siap diganti LLM)
 - `supabase/` — skema & data awal database
